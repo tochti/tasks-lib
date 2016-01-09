@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/tochti/gin-gum/gummodel"
+	"github.com/tochti/gin-gum/gumauth"
 
 	"gopkg.in/gorp.v1"
 )
@@ -25,7 +25,7 @@ func GorpInit(db *sql.DB) *gorp.DbMap {
 		Dialect: gorp.MySQLDialect{"InnoDB", "UTF8"},
 	}
 
-	dbMap.AddTable(gummodel.User{}).SetKeys(true, "ID")
+	dbMap.AddTable(gumauth.User{}).SetKeys(true, "ID")
 	dbMap.AddTable(Task{}).SetKeys(true, "id")
 	dbMap.AddTable(TasksUsers{}).SetKeys(false, "user_id", "task_id")
 

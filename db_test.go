@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tochti/gin-gum/gummodel"
+	"github.com/tochti/gin-gum/gumauth"
 	"github.com/tochti/gin-gum/gumspecs"
 	"github.com/tochti/gin-gum/gumtest"
 
@@ -51,8 +51,8 @@ func initTestDB(t *testing.T) *gorp.DbMap {
 	return db
 }
 
-func fillTestDB(t *testing.T, db *gorp.DbMap) ([]*Task, []*gummodel.User, []*TasksUsers) {
-	users := []*gummodel.User{
+func fillTestDB(t *testing.T, db *gorp.DbMap) ([]*Task, []*gumauth.User, []*TasksUsers) {
+	users := []*gumauth.User{
 		{
 			ID:        1,
 			Username:  "robot",

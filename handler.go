@@ -1,7 +1,6 @@
 package tasks
 
 import (
-	"database/sql"
 	"errors"
 	"net/http"
 	"strconv"
@@ -32,13 +31,13 @@ func ReadUserID(c *gin.Context) (int64, error) {
 func ReadAll(ginCtx *gin.Context, db *gorp.DbMap) {
 	userID, err := ReadUserID(ginCtx)
 	if err != nil {
-		gumrest.ErrorResponse(ginCtx, 404, err)
+		gumrest.ErrorResponse(ginCtx, http.StatusBadRequest, err)
 		return
 	}
 
 	tasks, err := ReadAllTasksUser(db, userID)
 	if err != nil {
-		gumrest.ErrorResponse(ginCtx, 404, err)
+		gumrest.ErrorResponse(ginCtx, http.StatusNotFound, err)
 		return
 	}
 
@@ -49,57 +48,90 @@ func ReadOne(ginCtx *gin.Context, db *gorp.DbMap) {
 	tmp := ginCtx.Param("id")
 	taskID, err := strconv.ParseInt(tmp, 10, 64)
 	if err != nil {
-		gumrest.ErrorResponse(ginCtx, 404, err)
+		gumrest.ErrorResponse(ginCtx, http.StatusBadRequest, err)
 		return
 	}
 
 	userID, err := ReadUserID(ginCtx)
 	if err != nil {
-		gumrest.ErrorResponse(ginCtx, 404, err)
+		gumrest.ErrorResponse(ginCtx, http.StatusBadRequest, err)
 		return
 	}
 
 	task, err := ReadOneTaskUser(db, taskID, userID)
 	if err != nil {
-		gumrest.ErrorResponse(ginCtx, 404, err)
+		gumrest.ErrorResponse(ginCtx, http.StatusNotFound, err)
 		return
 	}
 
-	ginCtx.JSON(200, task)
+	ginCtx.JSON(http.StatusOK, task)
 
 }
 
 func Create(ginCtx *gin.Context, db *gorp.DbMap) {
 	userID, err := ReadUserID(ginCtx)
 	if err != nil {
-		gumrest.ErrorResponse(ginCtx, 404, err)
+		gumrest.ErrorResponse(ginCtx, http.StatusBadRequest, err)
 		return
 	}
 
 	task := &Task{}
 	err = ginCtx.BindJSON(task)
 	if err != nil {
-		gumrest.ErrorResponse(ginCtx, 404, err)
+		gumrest.ErrorResponse(ginCtx, http.StatusBadRequest, err)
 		return
 	}
 
 	err = CreateTaskUser(db, task, userID)
 	if err != nil {
-		gumrest.ErrorResponse(ginCtx, 404, err)
+		gumrest.ErrorResponse(ginCtx, http.StatusNotFound, err)
 		return
 	}
 
 	ginCtx.JSON(http.StatusCreated, task)
 }
 
-func Update(ginCtx *gin.Context, db *sql.DB) {
-	_, err := ReadUserID(ginCtx)
+func Update(ginCtx *gin.Context, db *gorp.DbMap) {
+	tmp := ginCtx.Params.ByName("id")
+	taskID, err := strconv.ParseInt(tmp, 10, 64)
 	if err != nil {
-		gumrest.ErrorResponse(ginCtx, 404, err)
+		gumrest.ErrorResponse(ginCtx, http.StatusBadRequest, err)
 		return
 	}
 
+	newTask := Task{}
+	err = ginCtx.BindJSON(&newTask)
+	newTask.ID = taskID
+
+	_, err = db.Update(&newTask)
+	if err != nil {
+		gumrest.ErrorResponse(ginCtx, http.StatusBadRequest, err)
+		return
+	}
+
+	ginCtx.JSON(200, newTask)
+
 }
 
-func Delete(ginCtx *gin.Context, db *sql.DB) {
+func Delete(ginCtx *gin.Context, db *gorp.DbMap) {
+	userID, err := ReadUserID(ginCtx)
+	if err != nil {
+		gumrest.ErrorResponse(ginCtx, http.StatusBadRequest, err)
+		return
+	}
+
+	tmp := ginCtx.Params.ByName("id")
+	taskID, err := strconv.ParseInt(tmp, 10, 64)
+	if err != nil {
+		gumrest.ErrorResponse(ginCtx, http.StatusBadRequest, err)
+		return
+	}
+
+	err = DeleteTaskUser(db, &Task{ID: taskID}, userID)
+	if err != nil {
+		gumrest.ErrorResponse(ginCtx, http.StatusBadRequest, err)
+		return
+	}
+
+	ginCtx.JSON(http.StatusOK, nil)
 }
